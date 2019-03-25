@@ -11,11 +11,12 @@ from ontology import Ontology
 from itertools import chain
 import pygame
 import glo
-
+import time
 import random 
 import numpy as np
 import sys
 
+start_time = time.time()
 #MISC
 
 class Noeud :
@@ -88,10 +89,7 @@ def astar(initStates, goalStates, wallStates):
             
             for fils in nouveauxNoeuds :
                 f = g(nodeInit.position,fils.position) + h(fils.position, goal)
-
                 frontiere.append((f,fils))
-
-
             
     path = []
     while bestNoeud.parent != None :
@@ -115,11 +113,11 @@ game = Game()
 def init(_boardname=None):
     global player,game
     # pathfindingWorld_MultiPlayer4
-    name = _boardname if _boardname is not None else 'match'
+    name = _boardname if _boardname is not None else 'pathfindingWorld_MultiPlayer2'
     game = Game('Cartes/' + name + '.json', SpriteBuilder)
     game.O = Ontology(True, 'SpriteSheet-32x32/tiny_spritesheet_ontology.csv')
     game.populate_sprite_names(game.O)
-    game.fps = 15  # frames per second
+    game.fps = 10  # frames per second
     game.mainiteration()
     game.mask.allow_overlaping_players = True
     #player = game.player
@@ -134,10 +132,6 @@ def main():
     print (iterations)
 
     init()
-    
-    
-    
-
     
     #-------------------------------
     # Initialisation
@@ -204,21 +198,11 @@ def main():
     non_croisement = []
     for i in range(nbPlayers):
         non_croisement.append([i])    
-        
-    #jP = 0
-    #jR = 0
+
     for i in range(nbPlayers) :
         for j in range(i+1, nbPlayers):
             for x in path[i] :
                 if x in path[j] :#si x dans la liste on fait rien on break
-                    '''
-                    if path[i].index(x) < path[j].index(x) :
-                        if path[i].index(x) != len(path[i]) - 1 :
-                            if path[j].index(x) != len(path[j]) - 1 :
-                    
-                                jP = i
-                                jR = j
-                    '''
                     break
                 if x == path[i][len(path[i])-1] : # si x etant le dernier elem de path 
                     if x not in path[j]:          # n'etant pas dans j 
@@ -226,33 +210,17 @@ def main():
                         non_croisement[j].append(i) # on ajoute dans leur table
                         
     non_croisement.sort(key = len)
-    print(non_croisement)
-    '''
-    if len(non_croisement[0])!=nbPlayers-1 :
-        if len(path[jP]) < len(path[jR])  :
-            tmp = non_croisement[jR];
-            non_croisement.remove(tmp)
-            non_croisement.insert(0,tmp)
-    '''                
-    print(non_croisement)
-        
-            
-    print(path)                
-    # on donne a chaque joueur une fiole a ramasser
-    # en essayant de faire correspondre les couleurs pour que ce soit plus simple à suivre
-    
     
     #-------------------------------
     # Boucle principale de déplacements 
     #-------------------------------
     posPlayers = initStates
-
+    nb_it = 0
     for i in range(iterations):
         
         '''on regarde dans non croisement si vide alors on supprime'''
         for x in non_croisement:
             for y in x :
-                print(x, y)
                 if(len(path[y]) == 0):
                     x.remove(y)
             if len(non_croisement[0]) == 0 :
@@ -264,27 +232,16 @@ def main():
     
          # on fait bouger chaque joueur séquentiellement
         for j in non_croisement[0] :
-             
-               
-            
              row,col = posPlayers[j]
-                #goal = goalStates[j%(len(goalStates))];
-            
-            
-            #for k in range(len(posPlayers)):
-                #if k!=j :
-                    #wallStates.append(posPlayers[k])
-            
-            #path = astar((row,col), goal, wallStates)
              if len(path[j]) == 0 :
                     continue
-                
              
              x,y, t = path[j][0]
              posPlayers[j] = (x,y)
              players[j].set_rowcol(x,y)
                 #print ("pos : ",x,y)
              game.mainiteration()
+             nb_it = nb_it +1
              col=y
              row=x
              if j in non_croisement[0] :
@@ -293,40 +250,25 @@ def main():
              for l in range(j + 1, nbPlayers) :
                  if j in non_croisement[l] :
                      non_croisement[l].remove(j)
-                
-                #for k in range(len(posPlayers)):
-                    #if k!=j :
-                        #wallStates.remove(posPlayers[k])
-                         
-          
-             print(path)
              
                 # si on a  trouvé un objet on le ramasse
              if len(path[j]) == 0:
                  if (row,col) in goalStates:
                     
-                    o = players[j].ramasse(game.layers)
+                    players[j].ramasse(game.layers)
                     game.mainiteration()
                     print ("Objet trouvé par le joueur ", j)
                     goalStates.remove((row,col)) # on enlève ce goalState de la liste
                     score[j]+=1
-                        
-                
-                        # et on remet un même objet à un autre endroit
-                                  
-                        
                     break
                 
     
     print ("scores:", score)
+    print("Nombre d'itérations :", nb_it)
     pygame.quit()
     
-        
-    
-   
 
 if __name__ == '__main__':
     main()
-    
 
-
+print("temps d'exécution : %s secondes ---" % (time.time()-start_time))

@@ -8,10 +8,12 @@ from spritebuilder import SpriteBuilder
 from players import Player
 from ontology import Ontology
 import pygame
-
+import time
 import random 
 import sys
 
+
+start_time = time.time()
 #MISC
 
 class Noeud :
@@ -106,11 +108,11 @@ game = Game()
 def init(_boardname=None):
     global player,game
     # pathfindingWorld_MultiPlayer4
-    name = _boardname if _boardname is not None else 'pathfindingWorld_MultiPlayer1bis'
+    name = _boardname if _boardname is not None else 'pathfindingWorld_MultiPlayer2'
     game = Game('Cartes/' + name + '.json', SpriteBuilder)
     game.O = Ontology(True, 'SpriteSheet-32x32/tiny_spritesheet_ontology.csv')
     game.populate_sprite_names(game.O)
-    game.fps = 20  # frames per second
+    game.fps = 10  # frames per second
     game.mainiteration()
     game.mask.allow_overlaping_players = True
     #player = game.player
@@ -199,7 +201,7 @@ def main():
     # bon ici on fait juste plusieurs random walker pour exemple...
     
     posPlayers = initStates
-
+    nb_it = 0
     for i in range(iterations):
         
         for j in range(nbPlayers): # on fait bouger chaque joueur séquentiellement
@@ -225,6 +227,7 @@ def main():
             players[j].set_rowcol(x,y)
 
             game.mainiteration()
+            nb_it = nb_it +1
             col=y
             row=x
             path[j].pop(0)
@@ -242,10 +245,11 @@ def main():
                 break
             
     print ("scores:", score)
+    print("Nombre d'itérations :", nb_it)
     pygame.quit()
 
 if __name__ == '__main__':
     main()
     
-
+print("temps d'exécution : %s secondes ---" % (time.time()-start_time))
 

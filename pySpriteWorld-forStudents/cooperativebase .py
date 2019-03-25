@@ -11,11 +11,12 @@ from ontology import Ontology
 from itertools import chain
 import pygame
 import glo
-
+import time
 import random 
 import numpy as np
 import sys
 
+start_time = time.time()
 #MISC
 
 class Noeud :
@@ -110,11 +111,11 @@ game = Game()
 def init(_boardname=None):
     global player,game
     # pathfindingWorld_MultiPlayer4
-    name = _boardname if _boardname is not None else 'pathfindingWorld_MultiPlayer4'
+    name = _boardname if _boardname is not None else 'pathfindingWorld_MultiPlayer2'
     game = Game('Cartes/' + name + '.json', SpriteBuilder)
     game.O = Ontology(True, 'SpriteSheet-32x32/tiny_spritesheet_ontology.csv')
     game.populate_sprite_names(game.O)
-    game.fps = 5  # frames per second
+    game.fps = 10  # frames per second
     game.mainiteration()
     game.mask.allow_overlaping_players = True
     #player = game.player
@@ -210,7 +211,7 @@ def main():
     # Boucle principale de déplacements 
     #-------------------------------
     posPlayers = initStates
-
+    nb_it = 0
     for i in range(iterations):
         
         '''on regarde dans non croisement si vide alors on supprime'''
@@ -235,6 +236,7 @@ def main():
              players[j].set_rowcol(x,y)
                 #print ("pos : ",x,y)
              game.mainiteration()
+             nb_it = nb_it +1
              col=y
              row=x
              if j in non_croisement[0] :
@@ -256,6 +258,7 @@ def main():
                     break
                 
     print ("scores:", score)
+    print("Nombre d'itérations :", nb_it)
     pygame.quit()
     
 
@@ -263,4 +266,4 @@ if __name__ == '__main__':
     main()
     
 
-
+print("temps d'exécution : %s secondes ---" % (time.time()-start_time))
