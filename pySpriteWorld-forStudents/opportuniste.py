@@ -6,14 +6,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 from gameclass import Game,check_init_game_done
 from spritebuilder import SpriteBuilder
 from players import Player
-from sprite import MovingSprite
 from ontology import Ontology
-from itertools import chain
 import pygame
-import glo
 
 import random 
-import numpy as np
 import sys
 
 #MISC
@@ -91,6 +87,8 @@ def astar(initStates, goalStates, wallStates):
 
                 frontiere.append((f,fils))
 
+
+            
     path = []
     while bestNoeud.parent != None :
         path.append(bestNoeud.position)
@@ -98,6 +96,7 @@ def astar(initStates, goalStates, wallStates):
     
     return path[::-1]
 
+    
 # ---- ---- ---- ---- ---- ----
 # ---- Main                ----
 # ---- ---- ---- ---- ---- ----
@@ -107,7 +106,7 @@ game = Game()
 def init(_boardname=None):
     global player,game
     # pathfindingWorld_MultiPlayer4
-    name = _boardname if _boardname is not None else 'pathfindingWorld_MultiPlayer2'
+    name = _boardname if _boardname is not None else 'pathfindingWorld_MultiPlayer1bis'
     game = Game('Cartes/' + name + '.json', SpriteBuilder)
     game.O = Ontology(True, 'SpriteSheet-32x32/tiny_spritesheet_ontology.csv')
     game.populate_sprite_names(game.O)
@@ -147,6 +146,57 @@ def main():
         
     # on localise tous les murs
     wallStates = [w.get_rowcol() for w in game.layers['obstacle']]
+    #print ("Wall states:", wallStates)
+    
+    #-------------------------------
+    # Placement aleatoire des fioles 
+    #-------------------------------
+    path=[]
+    goal = []
+    goal = goalStates.copy()
+    
+    randChoice = random.choice(goalStates)
+    
+    
+    if nbPlayers == len(goal):
+        for i in range(nbPlayers) :
+            randChoice = random.choice(goal)
+            goal.remove(randChoice)
+            list = []
+            for g in goalStates :
+                if g != randChoice :
+                    list.append(g)
+            
+            for l in list :
+                wallStates.append(l)
+            path.append(astar(initStates[i], randChoice, wallStates))
+            for l in list :
+                wallStates.remove(l)
+    else :
+        for i in range(nbPlayers) :
+            randChoice = random.choice(goal)
+            list = []
+            for g in goalStates :
+                if g != randChoice :
+                    list.append(g)
+            
+            for l in list :
+                wallStates.append(l)
+            path.append(astar(initStates[i], randChoice, wallStates))
+            for l in list :
+                wallStates.remove(l)
+            
+    
+    # on donne a chaque joueur une fiole a ramasser
+    # en essayant de faire correspondre les couleurs pour que ce soit plus simple à suivre
+    
+    
+    #-------------------------------
+    # Boucle principale de déplacements 
+    #-------------------------------
+    
+        
+    # bon ici on fait juste plusieurs random walker pour exemple...
     
     posPlayers = initStates
 
@@ -154,50 +204,43 @@ def main():
         
         for j in range(nbPlayers): # on fait bouger chaque joueur séquentiellement
             row,col = posPlayers[j]
-            goal = goalStates[j%(len(goalStates))];
             
-            
+            pos_other_player = []
             for k in range(len(posPlayers)):
                 if k!=j :
-                    wallStates.append(posPlayers[k])
-            
-            path = astar((row,col), goal, wallStates)
-            
-        
-            x,y = path[0]
+                    pos_other_player.append(posPlayers[k])
+
+            if path[j] == [] :
+                continue
+            x,y = path[j][0]
+            if (x,y) in pos_other_player :
+                for pos in pos_other_player :
+                    wallStates.append(pos)
+                path[j] = astar(posPlayers[j], path[j][len(path[j])-1], wallStates)
+                for pos in pos_other_player :
+                    wallStates.remove(pos)
+                x,y = path[j][0]    
+                
             posPlayers[j] = (x,y)
             players[j].set_rowcol(x,y)
-            #print ("pos : ",x,y)
+
             game.mainiteration()
             col=y
             row=x
-            
-            for k in range(len(posPlayers)):
-                if k!=j :
-                    wallStates.remove(posPlayers[k])
+            path[j].pop(0)
             
             # si on a  trouvé un objet on le ramasse
             if (row,col) in goalStates:
-                o = players[j].ramasse(game.layers)
+                players[j].ramasse(game.layers)
                 game.mainiteration()
                 print ("Objet trouvé par le joueur ", j)
                 goalStates.remove((row,col)) # on enlève ce goalState de la liste
                 score[j]+=1
                 
                 # et on remet un même objet à un autre endroit
-                x = random.randint(1,19)
-                y = random.randint(1,19)
-                while (x,y) in wallStates:
-                    x = random.randint(1,19)
-                    y = random.randint(1,19)
-                o.set_rowcol(x,y)
-                goalStates.append((x,y)) # on ajoute ce nouveau goalState
-                game.layers['ramassable'].add(o)
-                game.mainiteration()                
-                
+              
                 break
             
-    
     print ("scores:", score)
     pygame.quit()
 

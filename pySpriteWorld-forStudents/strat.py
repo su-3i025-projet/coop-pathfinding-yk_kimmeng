@@ -175,7 +175,8 @@ def main():
             for k in range(len(posPlayers)):
                 if k!=j :
                     wallStates.remove(posPlayers[k])
-            
+                     
+
             # si on a  trouvé un objet on le ramasse
             if (row,col) in goalStates:
                 o = players[j].ramasse(game.layers)
@@ -184,6 +185,7 @@ def main():
                 goalStates.remove((row,col)) # on enlève ce goalState de la liste
                 score[j]+=1
                 
+        
                 # et on remet un même objet à un autre endroit
                 x = random.randint(1,19)
                 y = random.randint(1,19)
